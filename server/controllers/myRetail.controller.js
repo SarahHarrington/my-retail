@@ -18,17 +18,16 @@ let productInfo = {
 exports.getProduct = function (req, res) {
   console.log('getting the product')
   let productId = req.params.productId;
-  var promisesfordata = [getProductName(productId), getProductPrice(productId)];
-  productInfo.productId = productId; //seeting product ID in object
-  var promises = Promise.all(promisesfordata);
+  // var promisesfordata = [getProductName(productId), getProductPrice(productId)];
+  // var promises = Promise.all(promisesfordata);
 
-  promises.then(function(results) {
-    console.log('promise results', results);
-    productInfo.productId = productId; //seeting product ID in object
-    productInfo.productName = results[0];
-    productInfo.productPrice = results[1];
-    res.send(productInfo);
-  })
+  // promises.then(function(results) {
+  //   console.log('promise results', results);
+  //   [productInfo.productId, productInfo.productName, productInfo.productPrice] = [productId, results[0], results[1]];
+  //   res.send(productInfo);
+  // })
+
+  getProductName(productId);
 };
 
 function getProductPrice(productId) {
@@ -36,10 +35,7 @@ function getProductPrice(productId) {
     console.log('get product price', productId);
     Product.findOne({ 'productId': productId }, function (err, data) {
       if (err) return err;
-      console.log('data from mongo', data);
-      let productPrice = data.prdocutPrice;
       productInfo.productPrice = data.productPrice;
-      // return productPrice;
       resolve(productInfo.productPrice);
     })
   })
@@ -51,7 +47,6 @@ function getProductName(productId) {
     https.get('https://redsky.target.com/v2/pdp/tcin/' + productId + '?excludes=taxonomy,price,promotion,bulk_ship,rating_and_review_reviews,rating_and_review_statistics,question_answer_statistics', (res) => {
       // const { statusCode } = res;
       // const contentType = res.headers['content-type'];
-
       // let error;
       // if (statusCode !=200) {
       //   error = new Error('Request failed.\n' + `Status Code: ${statusCode}`);
@@ -73,11 +68,7 @@ function getProductName(productId) {
         try {
           const parsedData = JSON.parse(rawData);
           productInfo.productName = parsedData.product.item.product_description.title;
-          let productName = parsedData.product.item.product_description.title;
-          console.log(productName);
-          // return productName;
-          // console.log(productInfo);
-          // console.log(parsedData);
+          console.log(parsedData);
           resolve(productInfo.productName)
         } catch (e) {
           console.error(e.message);
@@ -90,6 +81,7 @@ function getProductName(productId) {
 )}
 
 
-exports.updateProductPrice = function () {
-  console.log('nothing here')
+exports.updateProductPrice = function (req, res) {
+  console.log(req.params);
+  console.log(req.body);
 };
