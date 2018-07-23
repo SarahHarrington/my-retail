@@ -9,7 +9,6 @@ const ProductSchema = new Schema({
 
 const Product = mongoose.model('Product', ProductSchema, 'Products');
 
-
 let productInfo = {
   productId: '',
   productName: '',
@@ -21,30 +20,34 @@ exports.getProduct = function (req, res) {
   let productId = req.params.productId;
   var promisesfordata = [getProductName(productId), getProductPrice(productId)];
   productInfo.productId = productId; //seeting product ID in object
-  // getProductName(productId);
-  // getProductPrice(productId);
-  // res.send(productInfo);
-  // console.log('productInfo in the getProduct', productInfo);
   var promises = Promise.all(promisesfordata);
 
   promises.then(function(results) {
-    console.log(results);
+    console.log('promise results', results);
+    productInfo.productId = productId; //seeting product ID in object
+    productInfo.productName = results[0];
+    productInfo.productPrice = results[1];
+    res.send(productInfo);
   })
 };
 
 function getProductPrice(productId) {
-  // return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    console.log('get product price', productId);
     Product.findOne({ 'productId': productId }, function (err, data) {
       if (err) return err;
       console.log('data from mongo', data);
+      let productPrice = data.prdocutPrice;
       productInfo.productPrice = data.productPrice;
+      // return productPrice;
+      resolve(productInfo.productPrice);
     })
-    // resolve(productInfo.productPrice);
-  // })
+  })
 }
 
 function getProductName(productId) {
-  // return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    console.log('get product name', productId);
     https.get('https://redsky.target.com/v2/pdp/tcin/' + productId + '?excludes=taxonomy,price,promotion,bulk_ship,rating_and_review_reviews,rating_and_review_statistics,question_answer_statistics', (res) => {
       // const { statusCode } = res;
       // const contentType = res.headers['content-type'];
@@ -70,16 +73,19 @@ function getProductName(productId) {
         try {
           const parsedData = JSON.parse(rawData);
           productInfo.productName = parsedData.product.item.product_description.title;
+          let productName = parsedData.product.item.product_description.title;
+          console.log(productName);
+          // return productName;
           // console.log(productInfo);
           // console.log(parsedData);
+          resolve(productInfo.productName)
         } catch (e) {
           console.error(e.message);
         }
       }).on('error', (e) => {
         console.error(`Got error: ${e.message}`);
       });
-    // })
-    // resolve(productInfo.productName)
+    })
   }
 )}
 
