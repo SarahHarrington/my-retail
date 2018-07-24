@@ -94,7 +94,6 @@ function getProductName(productId) {
 
 function getProductPrice(productId) {
   return new Promise((resolve, reject) => {
-    console.log('get product price', productId);
     Product.findOne({ 'productId': productId }, function (err, data) {
       if (err) {
         reject(`There was an error getting product price: ${err.message}`);
