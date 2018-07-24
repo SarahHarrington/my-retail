@@ -5,7 +5,15 @@ const express = require('express'),
   bodyParser = require('body-parser');
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/myretail', { useNewUrlParser: true });
+mongoURI = '';
+
+if (process.env.MONGODB_URI != undefined) {
+  mongoURI = process.env.MONGODB_URI;
+} else {
+  mongoURI = 'mongodb://localhost:27017/myretail';
+}
+
+mongoose.connect(mongoURI, { useNewUrlParser: true });
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
