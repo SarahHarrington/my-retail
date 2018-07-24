@@ -99,7 +99,6 @@ function getProductPrice(productId) {
         reject(`There was an error getting product price: ${err.message}`);
       }
       if (data == null) {
-        console.log('data', data);
         productInfo.productPrice = 'There is no price data for this item';
         resolve(productInfo.productPrice);
       } 
