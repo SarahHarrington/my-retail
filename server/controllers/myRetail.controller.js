@@ -4,7 +4,7 @@ const https = require('https');
 
 const ProductSchema = new Schema({
   productId: Number,
-  productPrice: Number
+  productPrice: String
 })
 
 const Product = mongoose.model('Product', ProductSchema, 'Products');
@@ -16,50 +16,57 @@ let productInfo = {
 }
 
 exports.getProduct = function (req, res) {
-  console.log('getting the product')
   let productId = req.params.productId;
-  // var promisesfordata = [getProductName(productId), getProductPrice(productId)];
-  // var promises = Promise.all(promisesfordata);
-
-  // promises.then(function(results) {
-  //   console.log('promise results', results);
-  //   [productInfo.productId, productInfo.productName, productInfo.productPrice] = [productId, results[0], results[1]];
-  //   res.send(productInfo);
-  // })
-
-  getProductName(productId);
+  productInfo.productId = productId;
+  getProductName(productId)
+    .then((data, err) => {
+      if (err) {
+        res.send(err);
+      } 
+      else {
+        productInfo.productName = data;
+        getProductPrice(productId).then((priceData) => {
+          productInfo.productPrice = priceData;
+          res.send(productInfo);
+        })
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.send(err);
+    })
 };
 
-function getProductPrice(productId) {
-  return new Promise((resolve, reject) => {
-    console.log('get product price', productId);
-    Product.findOne({ 'productId': productId }, function (err, data) {
-      if (err) return err;
-      productInfo.productPrice = data.productPrice;
-      resolve(productInfo.productPrice);
-    })
-  })
-}
+exports.updateProductPrice = function (req, res) {
+  Product.findOneAndUpdate(
+    req.params.productId, 
+    req.body,
+    {new: true},
+    (err, product) => {
+      if (err) {
+        res.send(`Error updating price`);
+      }
+      res.send(product);
+    }
+  )
+};
 
 function getProductName(productId) {
   return new Promise((resolve, reject) => {
-    console.log('get product name', productId);
     https.get('https://redsky.target.com/v2/pdp/tcin/' + productId + '?excludes=taxonomy,price,promotion,bulk_ship,rating_and_review_reviews,rating_and_review_statistics,question_answer_statistics', (res) => {
-      // const { statusCode } = res;
-      // const contentType = res.headers['content-type'];
-      // let error;
-      // if (statusCode !=200) {
-      //   error = new Error('Request failed.\n' + `Status Code: ${statusCode}`);
-      // } else if (!/^application\/json/.test(contentType)) {
-      //   error = new Error('Invalid content-type.\n' +
-      //                     `Expected application/json but received ${contentType}`);
-      // }
-      // if(error) {
-      //   console.error(error.message);
-      //   console.log(res.headers);
-      //   res.resume();
-      //   return;
-      // }
+      
+    const { statusCode } = res;
+      const contentType = res.headers['content-type'];
+      
+      if (statusCode !=200) {
+        if (statusCode === 404) {
+          reject(`No item with product id ${productId} found`);
+        }
+        reject('Request failed.\n' + `Status Code: ${statusCode}`)
+      } 
+      else if (!/^application\/json/.test(contentType)) {
+        reject('Invalid content-type.\n' + `Expected application/json but received ${contentType}`)
+      }
 
       res.setEncoding('utf8');
       let rawData = '';
@@ -67,21 +74,39 @@ function getProductName(productId) {
       res.on('end', () => {
         try {
           const parsedData = JSON.parse(rawData);
-          productInfo.productName = parsedData.product.item.product_description.title;
-          console.log(parsedData);
-          resolve(productInfo.productName)
-        } catch (e) {
-          console.error(e.message);
+          if (Object.keys(parsedData.product.item).length === 0 && parsedData.constructor === Object) {
+            reject(`No item with product id ${productId} found`);
+          } else {
+            productInfo.productName = parsedData.product.item.product_description.title;
+            resolve(productInfo.productName);
+          }
+        } catch (err) {
+          console.error(`Error getting product name: ${err.message}`);
+          reject(`There was an error getting product data`);
         }
-      }).on('error', (e) => {
-        console.error(`Got error: ${e.message}`);
+      }).on('error', (err) => {
+        console.error(`Error getting product name: ${err.message}`);
+        reject(`There was an error getting product data`);
       });
     })
-  }
-)}
+  })
+}
 
-
-exports.updateProductPrice = function (req, res) {
-  console.log(req.params);
-  console.log(req.body);
-};
+function getProductPrice(productId) {
+  return new Promise((resolve, reject) => {
+    console.log('get product price', productId);
+    Product.findOne({ 'productId': productId }, function (err, data) {
+      if (err) {
+        reject(`There was an error getting product price: ${err.message}`);
+      }
+      if (data == null) {
+        productInfo.productPrice = 'There is no price data for this item';
+        resolve(productInfo.productPrice);
+      } 
+      else { 
+        productInfo.productPrice = data.productPrice;
+        resolve(productInfo.productPrice);
+      }
+    })
+  })
+}
