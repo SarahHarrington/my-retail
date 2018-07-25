@@ -49,7 +49,6 @@ exports.updateProductPrice = function (req, res) {
         res.status(404).send('Price update did not complete. Product Not Found');
       }
       else{
-        console.log('response data', data);
         res.send(`Product ${data.productId} price has been updated to $${data.productPrice} ${data.currency}.`);
       }
     }

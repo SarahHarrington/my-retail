@@ -56,13 +56,10 @@ Test 'PUT' Existing Products:
 Replace the productIds with the productId you would like to update and the productPrice you would like to set the item to.
 ```
 curl -X PUT \
-  http://localhost:3000/products/prductId \
+  http://localhost:3000/products/productId \
   -H 'Cache-Control: no-cache' \
-  -H 'Content-Type: application/json' \
-  -d '{
-	"productId": productId,
-	"productPrice": "12.99"
-}'
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'productPrice=16.99&currency=USD'
 ```
 
 #### Built With
