@@ -4,7 +4,8 @@ const https = require('https');
 
 const ProductSchema = new Schema({
   productId: Number,
-  productPrice: String
+  productPrice: String,
+  currency: String
 })
 
 const Product = mongoose.model('Product', ProductSchema, 'Products');
@@ -12,7 +13,7 @@ const Product = mongoose.model('Product', ProductSchema, 'Products');
 let productInfo = {
   productId: '',
   productName: '',
-  productPrice: ''
+  productPrice: {price: '', currency: ''},
 }
 
 exports.getProduct = function (req, res) {
@@ -23,7 +24,8 @@ exports.getProduct = function (req, res) {
       {
         productInfo.productName = data;
         getProductPrice(productId).then((priceData) => {
-          productInfo.productPrice = priceData;
+          productInfo.productPrice.price = priceData.productPrice;
+          productInfo.productPrice.currency = priceData.currency;
           res.send(productInfo);
         })
       }
@@ -34,9 +36,11 @@ exports.getProduct = function (req, res) {
 };
 
 exports.updateProductPrice = function (req, res) {
+  console.log('req.body', req.body)
   Product.findOneAndUpdate(
-    {'productId': req.params.productId}, 
-    req.body.productPrice,
+    {'productId': req.params.productId},
+    {'productPrice': req.body.productPrice, 'currency': req.body.currency},
+    {new: true},
     (err, data) => {
       if (err) {
         res.send(`Error updating price`);
@@ -45,7 +49,8 @@ exports.updateProductPrice = function (req, res) {
         res.status(404).send('Price update did not complete. Product Not Found');
       }
       else{
-        res.send(`Product ${data.productId} price has been updated to $${data.productPrice}`);
+        console.log('response data', data);
+        res.send(`Product ${data.productId} price has been updated to $${data.productPrice} ${data.currency}.`);
       }
     }
   )
@@ -102,9 +107,8 @@ function getProductPrice(productId) {
         productInfo.productPrice = 'There is no price data for this item';
         resolve(productInfo.productPrice);
       } 
-      else { 
-        productInfo.productPrice = data.productPrice;
-        resolve(productInfo.productPrice);
+      else {
+        resolve(data);
       }
     })
   })
