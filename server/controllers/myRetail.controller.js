@@ -20,10 +20,7 @@ exports.getProduct = function (req, res) {
   productInfo.productId = productId;
   getProductName(productId)
     .then((data, err) => {
-      if (err) {
-        res.send(err);
-      } 
-      else {
+      {
         productInfo.productName = data;
         getProductPrice(productId).then((priceData) => {
           productInfo.productPrice = priceData;
@@ -32,21 +29,24 @@ exports.getProduct = function (req, res) {
       }
     })
     .catch((err) => {
-      console.log(err);
-      res.send(err);
+      res.status(err.code).send(err.message);
     })
 };
 
 exports.updateProductPrice = function (req, res) {
   Product.findOneAndUpdate(
-    req.params.productId, 
-    req.body,
-    {new: true},
-    (err, product) => {
+    {'productId': req.params.productId}, 
+    req.body.productPrice,
+    (err, data) => {
       if (err) {
         res.send(`Error updating price`);
       }
-      res.send(product);
+      if (data == null) {
+        res.status(404).send('Price update did not complete. Product Not Found');
+      }
+      else{
+        res.send(`Product ${data.productId} price has been updated to $${data.productPrice}`);
+      }
     }
   )
 };
@@ -60,9 +60,9 @@ function getProductName(productId) {
       
       if (statusCode !=200) {
         if (statusCode === 404) {
-          reject(`No item with product id ${productId} found`);
+          reject({message: `No item with product id ${productId} found.`, code: statusCode});
         }
-        reject('Request failed.\n' + `Status Code: ${statusCode}`)
+        reject({message: 'Request failed.', code: statusCode})
       } 
       else if (!/^application\/json/.test(contentType)) {
         reject('Invalid content-type.\n' + `Expected application/json but received ${contentType}`)
