@@ -36,7 +36,6 @@ exports.getProduct = function (req, res) {
 };
 
 exports.updateProductPrice = function (req, res) {
-  console.log('req.body', req.body)
   Product.findOneAndUpdate(
     {'productId': req.params.productId},
     {'productPrice': req.body.productPrice, 'currency': req.body.currency},
