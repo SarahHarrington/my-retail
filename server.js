@@ -21,6 +21,7 @@ app.use(bodyParser.json());
 const routes = require('./server/routes/myRetail.router');
 routes(app);
 
-app.listen(port, () => {
+module.exports = app.listen(port, () => {
   console.log(`Listening on port ${port}`);
 })
+
